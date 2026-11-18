@@ -4,11 +4,10 @@
 import contextlib
 import datetime
 import ipaddress
-import socket
 import struct
-from typing import Union
+from typing import Optional, Tuple, Union
 
-from volatility3.framework import interfaces, renderers
+from volatility3.framework import constants, interfaces, renderers
 
 
 # FIXME: Move wintime_to_datetime() and unixtime_to_datetime() out of renderers, possibly framework.objects.utility
@@ -121,23 +120,38 @@ def convert_port(port_as_integer):
     return (port_as_integer >> 8) | ((port_as_integer & 0xFF) << 8)
 
 
-def convert_network_four_tuple(family, four_tuple):
+def convert_network_four_tuple(
+    family: int,
+    four_tuple,
+    af_inet: int = constants.mac.AF_INET,
+    af_inet6: int = constants.mac.AF_INET6,
+) -> Optional[Tuple[str, int, str, int]]:
     """Converts the connection four_tuple:
 
     (source ip, source port, dest ip, dest port)
 
     into their string equivalents. IP addresses are expected as a tuple
     of unsigned shorts. Ports are converted to proper endianness as well.
+
+    ``family`` is the raw address family value as it is stored inside the
+    analysed image, and must be compared against the image's own constant
+    values (``af_inet``/``af_inet6``), never the analysis host's
+    ``socket.AF_*`` values. Those differ between hosts (Darwin stores
+    ``AF_INET6`` as 30, Linux as 10 and Windows as 23), so comparing against
+    the host's runtime values silently drops every IPv6 connection whenever
+    the host is not macOS. The defaults are the Darwin constants because the
+    four_tuple layout produced by the macOS ``inpcb`` objects is the one this
+    function decodes; callers for another OS must pass that OS' values.
     """
 
-    if family == socket.AF_INET:
+    if family == af_inet:
         ret = (
             convert_ipv4(four_tuple[0]),
             convert_port(four_tuple[1]),
             convert_ipv4(four_tuple[2]),
             convert_port(four_tuple[3]),
         )
-    elif family == socket.AF_INET6:
+    elif family == af_inet6:
         ret = (
             convert_ipv6(four_tuple[0]),
             convert_port(four_tuple[1]),

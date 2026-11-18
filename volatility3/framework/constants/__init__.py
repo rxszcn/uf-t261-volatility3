@@ -14,6 +14,7 @@ import warnings
 from typing import Callable, Optional
 
 from volatility3.framework.constants import linux as linux
+from volatility3.framework.constants import mac as mac
 from volatility3.framework.constants import windows as windows
 from volatility3.framework.constants._version import (
     PACKAGE_VERSION as PACKAGE_VERSION,

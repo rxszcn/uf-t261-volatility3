@@ -372,7 +372,7 @@ class socket(objects.StructType):
 
         if inpcb is None:
             ret = None
-        elif self.get_family() == 2:
+        elif self.get_family() == constants.mac.AF_INET:
             ret = inpcb.get_ipv4_info()
         else:
             ret = inpcb.get_ipv6_info()
@@ -562,17 +562,17 @@ class sockaddr(objects.StructType):
         ip = ""
 
         family = self.sa_family
-        if family == 2:  # AF_INET
+        if family == constants.mac.AF_INET:
             addr_in = self.cast("sockaddr_in")
             ip = conversion.convert_ipv4(addr_in.sin_addr.s_addr)
 
-        elif family == 30:  # AF_INET6
+        elif family == constants.mac.AF_INET6:
             addr_in6 = self.cast("sockaddr_in6")
             ip = conversion.convert_ipv6(
                 addr_in6.sin6_addr.member(attr="__u6_addr").member(attr="__u6_addr32")
             )
 
-        elif family == 18:  # AF_LINK
+        elif family == constants.mac.AF_LINK:
             addr_dl = self.cast("sockaddr_dl")
             ip = str(addr_dl)
 
